@@ -2,6 +2,8 @@
 
 A simple, performant and versatile **Scene Graph API** supporting HTML/CSS, SVG and Canvas rendering.
 
+![Scene.js](/scene.png)
+
 **version: 1.0.0 in progress**
 
 

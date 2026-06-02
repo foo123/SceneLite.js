@@ -121,7 +121,7 @@ function Scene(container, width, height)
             /*}*/
         };
         dispatch = function(evt) {
-            if (container && evt.type && children.length)
+            if (container && evt.type && children && children.length)
             {
                 for (var handler='on'+String(evt.type).toLowerCase(),o,n=children.length,i=0; i<n; ++i)
                 {
@@ -202,7 +202,6 @@ function Scene(container, width, height)
                         /*style['transform-origin'] = (scaling * o.scaleX * o.x0).toFixed(4)+'px '+(scaling * o.scaleY * o.y0).toFixed(4)+'px';
                         style['transform'] = 'translate('+(scaling * o.x - scaling * o.scaleX * o.x0).toFixed(4)+'px,'+(scaling * o.y - scaling * o.scaleY * o.y0).toFixed(4)+'px) rotate('+String(o.rotation)+'rad)';*/
                         mtx = get_matrix(scaling * o.x - scaling * o.scaleX * o.x0, scaling * o.y - scaling * o.scaleY * o.y0, o.rotation, scaling * o.scaleX * o.x0, scaling * o.scaleY * o.y0, o.skewX, o.skewY, 1, 1, o.matrix);
-                        style['transform-origin'] = '0 0';
                         style['transform'] = 'matrix('+mtx.a.toFixed(4)+','+mtx.b.toFixed(4)+','+mtx.c.toFixed(4)+','+mtx.d.toFixed(4)+','+mtx.e.toFixed(4)+','+mtx.f.toFixed(4)+')';
                     /*}
                     else
@@ -859,6 +858,7 @@ function DisplayObject2D(content, type)
                             'position': 'absolute',
                             'left': '0',
                             'top': '0',
+                            'transform-origin': '0 0',
                             'display': 'block',
                             'pointer-events': 'auto'
                         });
@@ -914,6 +914,26 @@ DisplayObject2D[proto] = {
     pointerEvents: true,
     useTransform: true
 };
+([
+ 'touchmove'
+,'touchend'
+,'touchstart'
+,'mousemove'
+,'mouseup'
+,'mousedown'
+,'click'
+,'dblclick'
+,'pointermove'
+,'pointerup'
+,'pointerdown'
+,'wheel'
+,'dragend'
+,'dragstart'
+,'keyup'
+,'keydown'
+]).forEach(function(evt) {
+    DisplayObject2D[proto]['on' + evt.toLowerCase()] = null;
+});
 Scene.DisplayObject2D = DisplayObject2D;
 
 function Matrix2D(m11, m12, m13, m21, m22, m23)
