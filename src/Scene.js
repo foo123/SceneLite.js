@@ -240,7 +240,26 @@ function Scene(container, width, height)
                     'height': String(hei) + 'px'
                 });
             }
-            for (var o,el,mtx,n=children.length,i=0; i<n; ++i)
+            var needs_reorder = false, o, el, mtx, n = children.length, i;
+            for (i=1; i<n; ++i)
+            {
+                if (children[i-1].z > children[i].z)
+                {
+                    needs_reorder = true;
+                    break;
+                }
+            }
+            if (needs_reorder)
+            {
+                children = children.map(function(o, i) {
+                    return [o, i];
+                }).sort(function(a, b) {
+                    return (a[0].z - b[0].z) || (a[1] - b[1]);
+                }).map(function(oi) {
+                    return oi[0];
+                });
+            }
+            for (i=0; i<n; ++i)
             {
                 o = children[i];
                 if (!o || !(el=o.el))
@@ -266,7 +285,6 @@ function Scene(container, width, height)
                         if (o.content) el.appendChild(o.content);
                     }
                     var style = {}, attr = {},
-                        z = String(stdMath.round(o.z)),
                         a = o.alpha.toFixed(4).replace(/0+$/, '').replace(/\.$/, ''),
                         display = getStyle(el, 'display'),
                         pointerEvents = getStyle(el, 'pointer-events');
@@ -277,13 +295,16 @@ function Scene(container, width, height)
                     if (o.pointerEvents && (pointerEvents !== 'auto')) style['pointer-events'] = 'auto';
                     if (!o.pointerEvents && (pointerEvents !== 'none')) style['pointer-events'] = 'none';
                     if (getStyle(el, 'fill-opacity') !== a) {style['fill-opacity'] = a; style['stroke-opacity'] = a;}
-                    if (getStyle(el, 'z-index') !== z) style['z-index'] = z;
                     mtx = get_matrix(scaling * o.x - scaling * o.scaleX * o.x0, scaling * o.y - scaling * o.scaleY * o.y0, o.rotation, scaling * o.scaleX * o.x0, scaling * o.scaleY * o.y0, o.skewX, o.skewY, scaling * o.scaleX, scaling * o.scaleY, o.matrix);
                     attr['transform'] = 'matrix('+mtx.a.toFixed(4)+','+mtx.b.toFixed(4)+','+mtx.c.toFixed(4)+','+mtx.d.toFixed(4)+','+mtx.e.toFixed(4)+','+mtx.f.toFixed(4)+')';
                     /*attr['transform'] = 'translate('+(scaling * (o.x - o.scaleX * o.x0)).toFixed(4)+' '+(scaling * (o.y - o.scaleY * o.y0)).toFixed(4)+') rotate('+(o.rotation*180/PI).toFixed(4)+' '+(scaling * o.scaleX * o.x0).toFixed(4)+' '+(scaling * o.scaleY * o.y0).toFixed(4)+') scale('+(scaling * o.scaleX).toFixed(4)+' '+(scaling * o.scaleY).toFixed(4)+')';*/
                     setStyle(setAttr(el, attr), style);
-                    if (el.parentNode !== container) container.appendChild(el);
+                    if (needs_reorder || (el.parentNode !== container)) container.appendChild(el);
                     o.needsUpdate = false;
+                }
+                else if (needs_reorder)
+                {
+                    container.appendChild(el);
                 }
             }
             self.needsUpdate = false;
@@ -300,10 +321,29 @@ function Scene(container, width, height)
             }
             if (self.needsUpdate || (0 < children.filter(function(o) {return o.needsUpdate;}).length))
             {
+                var needs_reorder = false, o, el, mtx, n = children.length, i;
+                for (i=1; i<n; ++i)
+                {
+                    if (children[i-1].z > children[i].z)
+                    {
+                        needs_reorder = true;
+                        break;
+                    }
+                }
+                if (needs_reorder)
+                {
+                    children = children.map(function(o, i) {
+                        return [o, i];
+                    }).sort(function(a, b) {
+                        return (a[0].z - b[0].z) || (a[1] - b[1]);
+                    }).map(function(oi) {
+                        return oi[0];
+                    });
+                }
                 var ctx = container.getContext("2d");
                 ctx.resetTransform();
                 ctx.clearRect(0, 0, container.width, container.height);
-                for (var o,el,mtx,n=children.length,i=0; i<n; ++i)
+                for (i=0; i<n; ++i)
                 {
                     o = children[i];
                     if (!o || !(el=o.el) || (o.scene !== self))
@@ -640,6 +680,22 @@ function DisplayObject2D(content, type)
             enumerable: true,
             configurable: false
         });
+        def(self, '_x0', {
+            get: function() {
+                return (self.scene ? self.scene.scaling : 1) * sx * x0;
+            },
+            set: nop,
+            enumerable: true,
+            configurable: false
+        });
+        def(self, '_y0', {
+            get: function() {
+                return (self.scene ? self.scene.scaling : 1) * sy * y0;
+            },
+            set: nop,
+            enumerable: true,
+            configurable: false
+        });
         def(self, 'width', {
             get: function() {
                 return w;
@@ -901,6 +957,8 @@ DisplayObject2D[proto] = {
     z: 0,
     x0: 0,
     y0: 0,
+    _x0: 0,
+    _y0: 0,
     width: 0,
     height: 0,
     scaleX: 1,
@@ -1152,8 +1210,8 @@ Matrix2D.scale = function(sx, sy, ox, oy) {
     ox = ox || 0;
     oy = oy || 0;
     var m = new Matrix2D(
-    sx, 0,  -sx*ox + ox,
-    0,  sy, -sy*oy + oy
+    sx, 0,  ox - sx*ox,
+    0,  sy, oy - sy*oy
     );
     m.sx = sx;
     m.sy = sy;
@@ -1193,7 +1251,9 @@ Scene.Matrix2D = Matrix2D;
 function nop() {}
 function get_matrix(x, y, rotation, x0, y0, skewx, skewy, scalex, scaley, matrix)
 {
-    return Scene.Matrix2D.translate(x, y).mul(Scene.Matrix2D.rotate(rotation, x0, y0)).mul(Scene.Matrix2D.skewX(skewx)).mul(Scene.Matrix2D.skewY(skewy)).mul(Scene.Matrix2D.scale(scalex, scaley)).mul(matrix);
+    // allow for transformations like rotation and skew to be performed differently by the user
+    if (matrix.isIdentity) matrix = Scene.Matrix2D.rotate(rotation, x0, y0).mul(Scene.Matrix2D.skewX(skewx)).mul(Scene.Matrix2D.skewY(skewy));
+    return Scene.Matrix2D.translate(x, y).mul(matrix).mul(Scene.Matrix2D.scale(scalex, scaley));
 }
 function is_string(x)
 {
