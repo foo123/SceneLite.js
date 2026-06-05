@@ -4,7 +4,7 @@ A simple, performant and versatile **Scene Graph API** supporting HTML/CSS, SVG 
 
 ![Scene.js](/scene.png)
 
-**version: 1.0.0 in progress**
+**version: 1.0.0** 16kB minified
 
 
 **Demo Example**
