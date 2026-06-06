@@ -1,9 +1,9 @@
 /**
 *
-* Scene.js
-* A simple, performant and versatile Scene Graph API supporting HTML/CSS, SVG and Canvas rendering
+* SceneLite.js
+* A lite, performant and versatile Scene Graph API supporting HTML/CSS, SVG and Canvas rendering
 * @VERSION 1.0.0
-* https://github.com/foo123/Scene.js
+* https://github.com/foo123/SceneLite.js
 *
 **/
 (function(window) {
@@ -1439,5 +1439,5 @@ Scene.removeClass = removeClass;
 
 // export it
 Scene.VERSION = "1.0.0";
-window.Scene = Scene;
+window.SceneLite = Scene;
 })(window);

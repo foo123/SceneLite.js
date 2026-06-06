@@ -1,8 +1,8 @@
-# Scene.js
+# SceneLite.js
 
-A simple, performant and versatile **Scene Graph API** supporting HTML/CSS, SVG and Canvas rendering.
+A lite, performant and versatile **Scene Graph API** supporting HTML/CSS, SVG and Canvas rendering.
 
-![Scene.js](/scene.png)
+![SceneLite.js](/scenelite.png)
 
 **version: 1.0.0** 16 kB minified
 
